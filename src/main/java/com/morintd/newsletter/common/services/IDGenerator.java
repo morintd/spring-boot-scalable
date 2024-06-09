@@ -1,10 +1,10 @@
 package com.morintd.newsletter.common.services;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
-@Component
+@Service
 public class IDGenerator {
     public String generate() {
         return UUID.randomUUID().toString();

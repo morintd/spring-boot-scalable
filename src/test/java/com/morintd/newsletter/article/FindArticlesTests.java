@@ -19,7 +19,7 @@ import java.util.stream.Stream;
 
 import com.morintd.newsletter.article.services.dao.ArticleDAO;
 
-@SpringBootTest
+@SpringBootTest(properties = { "spring.datasource.url=jdbc:h2:mem:findarticles" })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -37,8 +37,6 @@ public class FindArticlesTests {
         }).toList();
 
         this.articleDAO.saveAll(articles);
-
-        List<Article> found = this.articleDAO.findAll();
     }
 
     @Test
