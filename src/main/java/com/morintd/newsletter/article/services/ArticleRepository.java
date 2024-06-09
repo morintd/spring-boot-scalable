@@ -4,9 +4,9 @@ import com.morintd.newsletter.article.services.dao.Article;
 import com.morintd.newsletter.article.services.dao.ArticleDAO;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PagedModel;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Service;
 
-@Repository
+@Service
 public class ArticleRepository {
     private final ArticleDAO dao;
 

@@ -8,6 +8,7 @@ import com.morintd.newsletter.common.services.IDGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -43,6 +44,7 @@ public class ArticleController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasRole('ADMIN')")
     Article createArticle(@RequestBody ArticleToCreateDTO articleToCreate) {
         Article article = new Article(this.idGenerator.generate(), articleToCreate.getTitle(), this.slugGenerator.generate(articleToCreate.getTitle()), articleToCreate.getContent());
         return this.articleRepository.create(article);

@@ -3,9 +3,10 @@ package com.morintd.newsletter.article.services.dao;
 import jakarta.persistence.*;
 
 import java.util.Objects;
+import java.util.UUID;
 
 @Entity
-@Table(name = "article")
+@Table(name = "articles")
 public class Article {
     @Id
     @Column(name = "id", nullable = false)
