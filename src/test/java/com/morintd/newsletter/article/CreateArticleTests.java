@@ -7,6 +7,7 @@ import com.morintd.newsletter.auth.AuthRepository;
 import com.morintd.newsletter.user.dao.Role;
 import com.morintd.newsletter.user.dao.User;
 import com.morintd.newsletter.user.dao.UserDAO;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,13 +41,16 @@ public class CreateArticleTests {
     @Autowired
     private AuthRepository authRepository;
 
-    private User user = new User("1", "user@company.com", "password", Role.ROLE_USER);
-    private User admin = new User("2", "admin@company.com", "password", Role.ROLE_ADMIN);
+    private final User user = new User("1", "user@company.com", "password", Role.ROLE_USER, "1");
+    private final User admin = new User("2", "admin@company.com", "password", Role.ROLE_ADMIN, "2");
 
     @BeforeAll
     public void initiAll() {
         this.userDAO.save(user);
         this.userDAO.save(admin);
+
+        Article article = new Article("1", "already-exist", "already-exist", "content", admin.getId());
+        this.articleDAO.save(article);
     }
 
     @Nested
@@ -57,6 +61,7 @@ public class CreateArticleTests {
         @BeforeAll
         public void initAll() throws Exception {
             String accessToken = authRepository.generateAccessToken(admin);
+            Cookie cookie = new Cookie("accessToken", accessToken);
 
             String body = "{" +
                 "\"title\":\"article-title\"," +
@@ -64,7 +69,7 @@ public class CreateArticleTests {
             "}";
 
             response = mockMvc.perform(post("/article")
-                            .header("Authorization", "Bearer " + accessToken )
+                            .cookie(cookie)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                             .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
@@ -76,9 +81,10 @@ public class CreateArticleTests {
 
             String expected = "{" +
                 "id:" + id + "," +
-                "\"title\":\"article-title\"," +
-                "\"slug\":\"article-title\"," +
-                "\"content\":\"article-content\"" +
+                "title:\"article-title\"," +
+                "slug:\"article-title\"," +
+                "content:\"article-content\"," +
+                "author:" + admin.getEmail() +
             "}";
 
             JSONAssert.assertEquals(expected, response, true);
@@ -89,7 +95,7 @@ public class CreateArticleTests {
             String id = JsonPath.read(response, "$.id");
 
             Optional<Article> actual = articleDAO.findById(id);
-            Article expected = new Article(id, "article-title", "article-title", "article-content");
+            Article expected = new Article(id, "article-title", "article-title", "article-content", admin.getId());
 
             if(actual.isPresent()) {
                 assertThat(actual.get()).isEqualTo(expected);
@@ -100,8 +106,27 @@ public class CreateArticleTests {
     }
 
     @Test
+    void shouldReturnErrorIfTitleIsAlreadyTaken() throws Exception {
+        String accessToken = authRepository.generateAccessToken(admin);
+        Cookie cookie = new Cookie("accessToken", accessToken);
+
+        String body = "{" +
+                "\"title\":\"already-exist\"," +
+                "\"content\":\"article-content\"" +
+                "}";
+
+
+        mockMvc.perform(post("/article")
+                        .cookie(cookie)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                        .andExpect(status().isConflict());
+    }
+
+    @Test
     void shouldReturnErrorIfLackRole() throws Exception {
         String accessToken = authRepository.generateAccessToken(user);
+        Cookie cookie = new Cookie("accessToken", accessToken);
 
         String body = "{" +
                 "\"title\":\"article-title\"," +
@@ -109,9 +134,9 @@ public class CreateArticleTests {
                 "}";
 
         mockMvc.perform(post("/article")
-                        .header("Authorization", "Bearer " + accessToken )
+                        .cookie(cookie)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isForbidden());
+                        .andExpect(status().isForbidden());
     }
 }

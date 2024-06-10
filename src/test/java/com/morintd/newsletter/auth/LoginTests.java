@@ -13,32 +13,33 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = { "spring.datasource.url=jdbc:h2:mem:register" })
+@SpringBootTest(properties = { "spring.datasource.url=jdbc:h2:mem:login" })
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class RegisterTests {
+public class LoginTests {
     @Autowired
     private MockMvc mockMvc;
     @Autowired
-    private UserDAO userDAO;
-    @Autowired
     private AuthRepository authRepository;
+    @Autowired
+    private UserDAO userDAO;
+    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    private User user = new User("1", "user@company.com", passwordEncoder.encode("password"), Role.ROLE_USER, "1");
 
     @BeforeAll
     public void initiAll() {
-        User user = new User("1", "already-exist@company.com", "password", Role.ROLE_USER, "1");
         this.userDAO.save(user);
     }
 
@@ -51,11 +52,11 @@ public class RegisterTests {
         @BeforeAll
         public void initAll() throws Exception {
             String body = "{" +
-                    "\"email\":\"user@company.com\"," +
+                    "\"email\":\"" + user.getEmail() + "\"," +
                     "\"password\":\"password\"" +
                     "}";
 
-            MvcResult result = mockMvc.perform(post("/auth/register")
+            MvcResult result = mockMvc.perform(post("/auth/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                             .andExpect(status().isCreated()).andReturn();
@@ -75,58 +76,20 @@ public class RegisterTests {
         @Test
         void shouldReturnRefreshToken() throws Exception {
             RefreshDTO actual = authRepository.decodeRefreshToken(refreshToken);
-            RefreshDTO expected = new RefreshDTO(actual.getUserId(), actual.getRefreshId());
+            RefreshDTO expected = new RefreshDTO(user.getId(), actual.getRefreshId());
 
             assertThat(actual).isEqualTo(expected);
         }
-
-        @Test
-        void shouldCreateUser() {
-            Optional<User> actual = userDAO.findByEmail("user@company.com");
-
-            if(actual.isPresent()) {
-                User expected = new User(actual.get().getId(), "user@company.com", actual.get().getPassword(), Role.ROLE_USER, actual.get().getRefreshId());
-                assertThat(actual.get()).isEqualTo(expected);
-            } else {
-                fail("User wasn't created");
-            }
-        }
     }
 
     @Test
-    void shouldReturnErrorIfEmailIsTaken() throws Exception {
+    void shouldReturnErrorIfCredentialsIncorrect() throws Exception {
         String body = "{" +
-                "\"email\":\"already-exist@company.com\"," +
-                "\"password\":\"password\"" +
+                "\"email\":\"" + user.getEmail() + "\"," +
+                "\"password\":\"wrong-password\"" +
                 "}";
 
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                        .andExpect(status().isConflict());
-    }
-
-    @Test
-    void shouldReturnErrorIfEmailIsInvalid() throws Exception {
-        String body = "{" +
-                "\"email\":\"bad-email\"," +
-                "\"password\":\"password\"" +
-                "}";
-
-        mockMvc.perform(post("/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body))
-                        .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    void shouldReturnErrorIfPasswordIsTooShort() throws Exception {
-        String body = "{" +
-                "\"email\":\"password-too-short@company.com\"," +
-                "\"password\":\"abc\"" +
-                "}";
-
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
                         .andExpect(status().isBadRequest());

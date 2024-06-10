@@ -15,23 +15,26 @@ public class User implements UserDetails {
     @Id
     @Column(name = "id", nullable = false)
     private String id;
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     private String email;
     @Column(name = "password")
     private String password;
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
     private Role role;
+    @Column(name = "refresh_id")
+    private String refreshId;
 
     public User() {
 
     }
 
-    public User(String id, String email, String password, Role role) {
+    public User(String id, String email, String password, Role role, String refreshId) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.role = role;
+        this.refreshId = refreshId;
     }
 
     public String getId() {
@@ -64,6 +67,14 @@ public class User implements UserDetails {
 
     public void setRole(Role role) {
         this.role = role;
+    }
+
+    public String getRefreshId() {
+        return refreshId;
+    }
+
+    public void setRefreshId(String refreshId) {
+        this.refreshId = refreshId;
     }
 
     @Override
@@ -101,12 +112,12 @@ public class User implements UserDetails {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         User user = (User) o;
-        return Objects.equals(id, user.id) && Objects.equals(email, user.email) && Objects.equals(password, user.password) && role == user.role;
+        return Objects.equals(id, user.id) && Objects.equals(email, user.email) && Objects.equals(password, user.password) && role == user.role && Objects.equals(refreshId, user.refreshId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, email, password, role);
+        return Objects.hash(id, email, password, role, refreshId);
     }
 
     @Override
@@ -116,6 +127,7 @@ public class User implements UserDetails {
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
                 ", role=" + role +
+                ", refreshId=" + refreshId +
                 '}';
     }
 }

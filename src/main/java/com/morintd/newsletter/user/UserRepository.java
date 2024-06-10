@@ -23,7 +23,15 @@ public class UserRepository {
         return this.dao.findByEmail(email);
     }
 
+    public Optional<User> findByRefresh(String userId, String refreshId) {
+        return this.dao.findByIdAndRefreshId(userId, refreshId);
+    }
+
     public User create(User user) {
+        return this.dao.save(user);
+    }
+
+    public User update(User user) {
         return this.dao.save(user);
     }
 
