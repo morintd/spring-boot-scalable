@@ -34,9 +34,9 @@ public class LoginTests {
     private AuthRepository authRepository;
     @Autowired
     private UserDAO userDAO;
-    private PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    private User user = new User("1", "user@company.com", passwordEncoder.encode("password"), Role.ROLE_USER, "1");
+    private final User user = new User("1", "user@company.com", passwordEncoder.encode("password"), Role.ROLE_USER, "1");
 
     @BeforeAll
     public void initiAll() {
@@ -66,7 +66,7 @@ public class LoginTests {
         }
 
         @Test
-        void shouldReturnAccessToken() throws Exception {
+        void shouldReturnAccessToken() {
             AuthDTO actual = authRepository.decodeAccessToken(accessToken);
             AuthDTO expected = new AuthDTO(actual.getUserId(), "user@company.com", Role.ROLE_USER);
 
@@ -74,7 +74,7 @@ public class LoginTests {
         }
 
         @Test
-        void shouldReturnRefreshToken() throws Exception {
+        void shouldReturnRefreshToken() {
             RefreshDTO actual = authRepository.decodeRefreshToken(refreshToken);
             RefreshDTO expected = new RefreshDTO(user.getId(), actual.getRefreshId());
 
