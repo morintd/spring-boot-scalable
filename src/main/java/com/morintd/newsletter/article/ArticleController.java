@@ -33,7 +33,7 @@ public class ArticleController {
 
     @GetMapping
     PagedModel<PublicArticle> findArticlesByPage(@RequestParam("page") int page) {
-        return this.articleRepository.findByPage(page - 1);
+        return this.articleRepository.findByPage(page);
     }
 
     @GetMapping("/{slug}")

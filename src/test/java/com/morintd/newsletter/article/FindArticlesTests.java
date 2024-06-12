@@ -63,7 +63,7 @@ public class FindArticlesTests {
             "}" +
         "}";
 
-        mockMvc.perform(get("/article?page=1"))
+        mockMvc.perform(get("/article?page=0"))
                 .andExpect(status().isOk())
                 .andExpect(content().json(expected));
     }
